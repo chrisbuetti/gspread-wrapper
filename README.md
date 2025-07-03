@@ -17,7 +17,8 @@ A Python wrapper module that extends the [`gspread`](https://github.com/burnash/
 Install dependencies if not already installed:
 
 ```bash
-pip install gspread pandas
+pip install git+https://github.com/chrisbuetti/gspread-wrapper.git
+
 ```
 
 Also ensure you have a Google service account JSON key file and that your target spreadsheet is shared with the service account's email.

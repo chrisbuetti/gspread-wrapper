@@ -4,6 +4,8 @@ import traceback
 import pandas as pd
 import requests
 
+print('V1.0.0')
+
 # Global gspread client initialized with service account
 gc = gspread.service_account()
 

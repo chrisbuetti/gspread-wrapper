@@ -103,26 +103,35 @@ class GSPREAD:
             result = chr(65 + remainder) + result
         return result
 
+    
     def replace_worksheet_with_df(self, worksheet_name, df, extra_rows=0):
-        """
-        Replace the contents of a worksheet with a pandas DataFrame.
+    """
+    Replace the contents of a worksheet with a pandas DataFrame.
 
-        Parameters:
-            worksheet_name (str): Sheet name
-            df (pd.DataFrame): Data to write
-            extra_rows (int): Optional buffer rows to add
-        """
-        worksheet = self.get_sheet_by_name(worksheet_name)
-        gspread_function(lambda: worksheet.clear_basic_filter())
-        gspread_function(lambda: worksheet.freeze(rows=0, cols=0))
-        gspread_function(lambda: worksheet.resize(1))  # Clear existing data
+    Parameters:
+        worksheet_name (str): Sheet name
+        df (pd.DataFrame): Data to write
+        extra_rows (int): Optional buffer rows to add
+    """
+    worksheet = self.get_sheet_by_name(worksheet_name)
+    gspread_function(lambda: worksheet.clear_basic_filter())
+    gspread_function(lambda: worksheet.freeze(rows=0, cols=0))
+    
+    # Prepare all rows: headers + data
+    headers = [list(df.columns)]
+    data_rows = gspread_function(lambda: df.values.tolist())
+    all_rows = headers + data_rows
+    
+    # Clear and write everything at once
+    gspread_function(lambda: worksheet.clear())
+    col_letter = self._number_to_column(df.shape[1])
+    range_label = f'A1:{col_letter}{len(all_rows)}'
+    gspread_function(lambda: worksheet.update(range_label, all_rows))
 
-        rows = gspread_function(lambda: df.values.tolist())
-        gspread_function(lambda: worksheet.insert_rows(rows, row=2, inherit_from_before=True))
-
-        col_letter = self._number_to_column(df.shape[1])
+    # Format the data rows (skip header row)
+    if len(all_rows) > 1:
         gspread_function(lambda: worksheet.format(
-            f"A2:{col_letter}{worksheet.row_count}",
+            f"A2:{col_letter}{len(all_rows)}",
             {
                 "backgroundColor": {"red": 1.0, "green": 1.0, "blue": 1.0},
                 "horizontalAlignment": "CENTER",
@@ -133,8 +142,9 @@ class GSPREAD:
                 },
             },
         ))
-        gspread_function(lambda: worksheet.freeze(rows=1))
-        return worksheet
+    gspread_function(lambda: worksheet.freeze(rows=1))
+    return worksheet
+
 
     def update_rows_by_range(self, sheet, cell_range, values):
         """
